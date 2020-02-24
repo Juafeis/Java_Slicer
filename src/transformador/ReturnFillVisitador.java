@@ -1,13 +1,13 @@
 package transformador;
 
+import static transformador.util.Generate.runtimeException;
+import static transformador.util.Util.isEnding;
+
 import japa.parser.ast.Node;
 import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.type.VoidType;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
-
-import static transformador.util.Generate.runtimeException;
-import static transformador.util.Util.isEnding;
 
 public class ReturnFillVisitador extends ModifierVisitorAdapter<Void> {
 	@Override

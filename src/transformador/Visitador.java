@@ -1,5 +1,24 @@
 package transformador;
-	
+
+import java.util.LinkedList;
+import java.util.List;
+
+import iter2rec.transformation.loop.Loop;
+import iter2rec.transformation.loop.While;
+import iter2rec.transformation.variable.LoopVariables;
+import iter2rec.transformation.variable.Variable;
+import japa.parser.ast.Node;
+import japa.parser.ast.body.ClassOrInterfaceDeclaration;
+import japa.parser.ast.body.MethodDeclaration;
+import japa.parser.ast.expr.Expression;
+import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.Statement;
+import japa.parser.ast.stmt.WhileStmt;
+import japa.parser.ast.type.ClassOrInterfaceType;
+import japa.parser.ast.type.PrimitiveType;
+import japa.parser.ast.type.Type;
+import japa.parser.ast.visitor.ModifierVisitorAdapter;
+
 public class Visitador extends ModifierVisitorAdapter<Object>
 {
 	/********************************************************/
@@ -69,8 +88,9 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		
 		
 		// Añadimos el nuevo método a la clase actual
-		this.classDeclaration.getMembers().add(newMethod);
+		//this.classDeclaration.getMembers().add(newMethod);
 		
+		Node newIf = null;
 		return newIf;
 	}
 

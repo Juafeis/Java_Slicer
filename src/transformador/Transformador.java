@@ -1,10 +1,10 @@
 package transformador;
 
-import japa.parser.JavaParser;
-import japa.parser.ast.CompilationUnit;
-
 import java.io.File;
 import java.io.FileWriter;
+
+import japa.parser.JavaParser;
+import japa.parser.ast.CompilationUnit;
 
 public class Transformador {
 
