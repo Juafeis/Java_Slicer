@@ -7,15 +7,26 @@ import iter2rec.transformation.loop.Loop;
 import iter2rec.transformation.loop.While;
 import iter2rec.transformation.variable.LoopVariables;
 import iter2rec.transformation.variable.Variable;
-import japa.parser.ast.Node;
+import japa.parser.ast.*;
 import japa.parser.ast.body.ClassOrInterfaceDeclaration;
 import japa.parser.ast.body.MethodDeclaration;
+import japa.parser.ast.body.VariableDeclarator;
+import japa.parser.ast.body.VariableDeclaratorId;
+import japa.parser.ast.expr.ArrayAccessExpr;
+import japa.parser.ast.expr.CastExpr;
 import japa.parser.ast.expr.Expression;
+import japa.parser.ast.expr.IntegerLiteralExpr;
+import japa.parser.ast.expr.MethodCallExpr;
+import japa.parser.ast.expr.NameExpr;
+import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.ExpressionStmt;
+import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.type.ClassOrInterfaceType;
 import japa.parser.ast.type.PrimitiveType;
+import japa.parser.ast.type.ReferenceType;
 import japa.parser.ast.type.Type;
 import japa.parser.ast.visitor.ModifierVisitorAdapter;
 
@@ -81,16 +92,105 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		// El objeto LoopVariables nos calcula la lista de argumentos del método 
 		List<Expression> arguments = loopVariables.getArgs();
 		
+		//while(***condition***)
+		Expression condition = whileStmt.getCondition();
+		
+		//Object[] result = this.metodo_x()
+		MethodCallExpr methodCall = new MethodCallExpr();
+		methodCall.setName("method"+contador);
+		methodCall.setArgs(arguments);
+		
+		//Object[] result = this.metodo_x()
+		ClassOrInterfaceType objType = new ClassOrInterfaceType();
+		objType.setName("Object");
+		
+		//Object[] result = this.metodo_x()
+		ReferenceType refType = new ReferenceType();
+		refType.setArrayCount(1);
+		refType.setType(objType);
+		
+		
+		//Object[] result = this.metodo_x()
+		NameExpr resultExpr = new NameExpr("result");
+		List<VariableDeclarator> vars = new LinkedList<VariableDeclarator>();
+		VariableDeclarator var = new VariableDeclarator();
+		VariableDeclaratorId varId = new VariableDeclaratorId();
+		varId.setName(resultExpr.getName());
+		vars.add(var);
+		var.setId(varId);
+		var.setInit(methodCall);
+		
+		//Object[] result = this.metodo_x()
+		VariableDeclarationExpr varDecExpr = new VariableDeclarationExpr();
+		varDecExpr.setType(refType);
+		varDecExpr.setVars(vars);
+		
+		//Object[] result = this.metodo_x()
+		ExpressionStmt exprStmt = new ExpressionStmt();
+		exprStmt.setExpression(varDecExpr);
 
+		
 		/**************************/
 		/********* METODO *********/
 		/**************************/
+		//Creamos el If recursivo 
+		IfStmt newIf = new IfStmt();
+		newIf.setCondition(whileStmt.getCondition());
+		
+		//*** If ***
+		BlockStmt cuerpoIF = new BlockStmt();
+		newIf.setThenStmt(cuerpoIF);
+		List<Statement> cuerpoIFStmts = new LinkedList<Statement>();
+		
+		//*** If ***  
+		cuerpoIFStmts.add(exprStmt);
+		
+		List<Type> types = loopVariables.getReturnTypes();
+		List<String> names = loopVariables.getReturnNames();
+		
+		// AÒadimos todas las variables del bucle
+		for (int i = 0; i < vars.size(); i++) {
+			
+			ArrayAccessExpr expr = new ArrayAccessExpr();
+			expr.setName(new NameExpr("result"));
+			expr.setIndex(new IntegerLiteralExpr(i+""));
+			
+			CastExpr cast = new CastExpr();
+			cast.setType(getWrapper(variables.get(i).getType()));
+			cast.setExpr(expr);
+			
+			cuerpoIFStmts.add(new ExpressionStmt(variables.get(i).getAssignationExpr(cast)));
+		}
+		
+		cuerpoIF.setStmts(cuerpoIFStmts);
+		newIf.setThenStmt(cuerpoIF);
+		
+		//CreaciÛn del metodo
+		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
+		methodDeclaration2.setName("method"+contador);
+		contador++;
+		
+		//Nos aseguramos que el metodo sea de tipo static
+		ClassOrInterfaceType object = new ClassOrInterfaceType();
+		object.setName("static Object");
+		ReferenceType type = new ReferenceType();
+		type.setArrayCount(1);
+		type.setType(object);
+		
+		methodDeclaration2.setType(type);
+		methodDeclaration2.setParameters(loopVariables.getParameters());
+		
+		//Llenado del mÈtodo
+		BlockStmt cuerpoMetodo = new BlockStmt();
+		List<Statement> cuerpoMetodoStmts = new LinkedList<Statement>();
+		cuerpoMetodoStmts.add(whileStmt.getBody());
+		cuerpoMetodo.setStmts(cuerpoMetodoStmts);
+		methodDeclaration2.setBody(cuerpoMetodo);
 		
 		
-		// Añadimos el nuevo método a la clase actual
-		//this.classDeclaration.getMembers().add(newMethod);
+		//AÒadimos el nuevo metodo a la clase
+		this.classDeclaration.getMembers().add(methodDeclaration2);
 		
-		Node newIf = null;
 		return newIf;
 	}
 
