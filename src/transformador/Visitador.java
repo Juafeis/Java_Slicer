@@ -85,30 +85,37 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		
 		// Creamos un objeto Loop que sirve para examinar bucles
 		Loop loop = new While(null, null, whileStmt);
-		// El objeto Loop nos calcula la lista de variables declaradas en el mŽtodo y usadas en el bucle (la intersecci—n)
+		// El objeto Loop nos calcula la lista de variables declaradas en el método y usadas en el bucle (la intersección)
 		List<Variable> variables = loop.getUsedVariables(methodDeclaration);
-		// Creamos un objeto LoopVariables que sirve para convertir la lista de variables en lista de argumentos y par‡metros
+		// Creamos un objeto LoopVariables que sirve para convertir la lista de variables en lista de argumentos y parámetros
 		LoopVariables loopVariables = new LoopVariables(variables);
-		// El objeto LoopVariables nos calcula la lista de argumentos del mŽtodo 
+		// El objeto LoopVariables nos calcula la lista de argumentos del método 
 		List<Expression> arguments = loopVariables.getArgs();
+		//Creamos el If recursivo 
+		IfStmt newIf = new IfStmt();
+		newIf.setCondition(whileStmt.getCondition());
 		
+		//*** If ***
+		BlockStmt blockIf = new BlockStmt();
+		newIf.setThenStmt(blockIf);
+		List<Statement> bodyIf = new LinkedList<Statement>();
+				
 		//while(***condition***)
 		Expression condition = whileStmt.getCondition();
 		
-		//Object[] result = this.metodo_x()
+		//method_x()
 		MethodCallExpr methodCall = new MethodCallExpr();
 		methodCall.setName("method"+contador);
 		methodCall.setArgs(arguments);
 		
-		//Object[] result = this.metodo_x()
+		//Object
 		ClassOrInterfaceType objType = new ClassOrInterfaceType();
 		objType.setName("Object");
 		
-		//Object[] result = this.metodo_x()
+		//Object[]
 		ReferenceType refType = new ReferenceType();
 		refType.setArrayCount(1);
 		refType.setType(objType);
-		
 		
 		//Object[] result = this.metodo_x()
 		NameExpr resultExpr = new NameExpr("result");
@@ -128,42 +135,33 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		//Object[] result = this.metodo_x()
 		ExpressionStmt exprStmt = new ExpressionStmt();
 		exprStmt.setExpression(varDecExpr);
-
-		
-		/**************************/
-		/********* METODO *********/
-		/**************************/
-		//Creamos el If recursivo 
-		IfStmt newIf = new IfStmt();
-		newIf.setCondition(whileStmt.getCondition());
-		
-		//*** If ***
-		BlockStmt cuerpoIF = new BlockStmt();
-		newIf.setThenStmt(cuerpoIF);
-		List<Statement> cuerpoIFStmts = new LinkedList<Statement>();
 		
 		//*** If ***  
-		cuerpoIFStmts.add(exprStmt);
+		bodyIf.add(exprStmt);
 		
 		List<Type> types = loopVariables.getReturnTypes();
 		List<String> names = loopVariables.getReturnNames();
 		
-		// Añadimos todas las variables del bucle
+		// Bucle para recorrer todas las variables
 		for (int i = 0; i < vars.size(); i++) {
-			
+			//result[i]
 			ArrayAccessExpr expr = new ArrayAccessExpr();
 			expr.setName(new NameExpr("result"));
 			expr.setIndex(new IntegerLiteralExpr(i+""));
-			
+			//Casting para cada variable
 			CastExpr cast = new CastExpr();
 			cast.setType(getWrapper(variables.get(i).getType()));
 			cast.setExpr(expr);
 			
-			cuerpoIFStmts.add(new ExpressionStmt(variables.get(i).getAssignationExpr(cast)));
+			bodyIf.add(new ExpressionStmt(variables.get(i).getAssignationExpr(cast)));
 		}
+				
+		blockIf.setStmts(bodyIf);
+		newIf.setThenStmt(blockIf);
 		
-		cuerpoIF.setStmts(cuerpoIFStmts);
-		newIf.setThenStmt(cuerpoIF);
+		/**************************/
+		/********* METODO *********/
+		/**************************/
 		
 		//Creación del metodo
 		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
