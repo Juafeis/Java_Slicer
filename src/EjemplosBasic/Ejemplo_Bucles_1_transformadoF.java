@@ -1,6 +1,6 @@
 package EjemplosBasic;
 
-public class Ejemplo_Bucles_1F {
+public class Ejemplo_Bucles_1_transformadoF {
 
     public static void main(String[] args) {
         System.out.println("Empieza bucle WHILE:");
@@ -12,11 +12,14 @@ public class Ejemplo_Bucles_1F {
         System.out.println();
     }
 
-    static Object[] method1(int x) {
+    public static Object[] method1(int x) {
         {
             System.out.print(" " + x);
             x++;
         }
-        throw new RuntimeException("The compiler doesn't know that this statement is unreachable");
+        if (x <= 10) {
+            return method1(x);
+        }
+        return new Object[] { x };
     }
 }
