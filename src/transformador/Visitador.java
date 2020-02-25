@@ -23,6 +23,7 @@ import japa.parser.ast.expr.MethodCallExpr;
 import japa.parser.ast.expr.NameExpr;
 import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
+import japa.parser.ast.stmt.DoStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.ReturnStmt;
@@ -78,6 +79,86 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		this.methodDeclaration = this.previousMethodDeclarations.isEmpty() ? null : this.previousMethodDeclarations.getLast();
 
 		return newMethodDeclaration;
+	}
+	
+	// Visitador de sentencias "do while"
+	public Node visit(DoStmt whileStmt, Object args)
+	{
+		//Creamos el If recursivo 
+		IfStmt newIf = new IfStmt();
+		newIf.setCondition(whileStmt.getCondition());
+		//Object
+		ClassOrInterfaceType objType = new ClassOrInterfaceType();
+		objType.setName("Object");
+		// Creamos un objeto Loop que sirve para examinar bucles
+		Loop loop = new While(null, null, whileStmt);
+		// El objeto Loop nos calcula la lista de variables declaradas en el método y usadas en el bucle (la intersección)
+		List<Variable> variables = loop.getUsedVariables(methodDeclaration);
+		// Creamos un objeto LoopVariables que sirve para convertir la lista de variables en lista de argumentos y parámetros
+		LoopVariables loopVariables = new LoopVariables(variables);
+		// El objeto LoopVariables nos calcula la lista de argumentos del método 
+		List<Expression> arguments = loopVariables.getArgs();
+		//Declaración del segundo método
+		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
+		methodDeclaration2.setName("method"+contador);
+		methodDeclaration2.setModifiers(methodDeclaration.getModifiers());
+		String nameMethod = methodDeclaration2.getName();
+		contador++;
+		
+		
+		//Mantener el típo del método en la nueva llamada
+		ClassOrInterfaceType object = new ClassOrInterfaceType();
+		object.setName("Object");
+		ReferenceType type = new ReferenceType();
+		type.setArrayCount(1);
+		type.setType(object);
+		
+		methodDeclaration2.setType(type);
+		methodDeclaration2.setParameters(loopVariables.getParameters());
+		
+		// Añadimos el body del do while al principio del metodo
+		
+		BlockStmt cuerpoMetodo = new BlockStmt();
+		List<Statement> stmtsMetodo = new LinkedList<Statement>();
+		MethodCallExpr callMethod = new MethodCallExpr();
+		callMethod.setName(nameMethod);
+		callMethod.setArgs(arguments);
+		stmtsMetodo.add(whileStmt.getBody());
+		ReturnStmt returnIf = new ReturnStmt();
+		returnIf.setExpr(callMethod);
+		
+		List<Statement> methodBody = new LinkedList<Statement>();
+		
+		
+		methodBody.add(returnIf);
+		
+		
+		BlockStmt blockIf2 = new BlockStmt();
+		blockIf2.setStmts(methodBody);
+		
+		// Creamos el if recursivo dentro del nuevo método
+		IfStmt recIf = new IfStmt(whileStmt.getCondition(), blockIf2, null);
+		stmtsMetodo.add(recIf);
+		cuerpoMetodo.setStmts(stmtsMetodo);
+		methodDeclaration2.setBody(cuerpoMetodo);
+		
+		
+		//Añadimos el nuevo metodo a la clase
+		this.classDeclaration.getMembers().add(methodDeclaration2);
+		
+		ReturnStmt returnStmt = new ReturnStmt();
+		ArrayInitializerExpr arrayInitializerExpr = new ArrayInitializerExpr();
+		arrayInitializerExpr.setValues(arguments);
+		
+		ArrayCreationExpr arrayCreationExpr = new ArrayCreationExpr();
+		arrayCreationExpr.setType(objType);
+		arrayCreationExpr.setArrayCount(1);
+		arrayCreationExpr.setInitializer(arrayInitializerExpr);
+		returnStmt.setExpr(arrayCreationExpr);
+		stmtsMetodo.add(returnStmt);
+		
+		
+		return newIf;
 	}
 	
 	// Visitador de sentencias "while"
@@ -170,17 +251,15 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		/********* METODO *********/
 		/**************************/
 		
-		
-		
-		//Creación del metodo
+		//Declaración del segundo método
 		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
 		methodDeclaration2.setName("method"+contador);
 		methodDeclaration2.setModifiers(methodDeclaration.getModifiers());
-		String nameMethod = "method" + contador;
+		String nameMethod = methodDeclaration2.getName();
 		contador++;
 		
 		
-		//Nos aseguramos que el metodo sea de tipo static
+		//Mantener el típo del método en la nueva llamada
 		ClassOrInterfaceType object = new ClassOrInterfaceType();
 		object.setName("Object");
 		ReferenceType type = new ReferenceType();
@@ -221,14 +300,14 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		this.classDeclaration.getMembers().add(methodDeclaration2);
 		
 		ReturnStmt returnStmt = new ReturnStmt();
-		ArrayInitializerExpr arrayReturn = new ArrayInitializerExpr();
-		arrayReturn.setValues(arguments);
+		ArrayInitializerExpr arrayInitializerExpr = new ArrayInitializerExpr();
+		arrayInitializerExpr.setValues(arguments);
 		
-		ArrayCreationExpr array2 = new ArrayCreationExpr();
-		array2.setType(objType);
-		array2.setArrayCount(1);
-		array2.setInitializer(arrayReturn);
-		returnStmt.setExpr(array2);
+		ArrayCreationExpr arrayCreationExpr = new ArrayCreationExpr();
+		arrayCreationExpr.setType(objType);
+		arrayCreationExpr.setArrayCount(1);
+		arrayCreationExpr.setInitializer(arrayInitializerExpr);
+		returnStmt.setExpr(arrayCreationExpr);
 		stmtsMetodo.add(returnStmt);
 		
 		
