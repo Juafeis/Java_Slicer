@@ -1,5 +1,6 @@
 package transformador;
 
+import java.lang.instrument.ClassDefinition;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -13,6 +14,8 @@ import japa.parser.ast.body.MethodDeclaration;
 import japa.parser.ast.body.VariableDeclarator;
 import japa.parser.ast.body.VariableDeclaratorId;
 import japa.parser.ast.expr.ArrayAccessExpr;
+import japa.parser.ast.expr.ArrayCreationExpr;
+import japa.parser.ast.expr.ArrayInitializerExpr;
 import japa.parser.ast.expr.CastExpr;
 import japa.parser.ast.expr.Expression;
 import japa.parser.ast.expr.IntegerLiteralExpr;
@@ -22,6 +25,7 @@ import japa.parser.ast.expr.VariableDeclarationExpr;
 import japa.parser.ast.stmt.BlockStmt;
 import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.IfStmt;
+import japa.parser.ast.stmt.ReturnStmt;
 import japa.parser.ast.stmt.Statement;
 import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.type.ClassOrInterfaceType;
@@ -79,6 +83,7 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 	// Visitador de sentencias "while"
 	public Node visit(WhileStmt whileStmt, Object args)
 	{
+		
 		/**************************/
 		/******** LLAMADOR ********/
 		/**************************/		
@@ -143,7 +148,8 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		List<String> names = loopVariables.getReturnNames();
 		
 		// Bucle para recorrer todas las variables
-		for (int i = 0; i < vars.size(); i++) {
+		int i = 0;
+		while(i < vars.size()) {
 			//result[i]
 			ArrayAccessExpr expr = new ArrayAccessExpr();
 			expr.setName(new NameExpr("result"));
@@ -154,6 +160,7 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 			cast.setExpr(expr);
 			
 			bodyIf.add(new ExpressionStmt(variables.get(i).getAssignationExpr(cast)));
+			i++;
 		}
 				
 		blockIf.setStmts(bodyIf);
@@ -163,14 +170,19 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		/********* METODO *********/
 		/**************************/
 		
+		
+		
 		//Creación del metodo
 		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
 		methodDeclaration2.setName("method"+contador);
+		methodDeclaration2.setModifiers(methodDeclaration.getModifiers());
+		String nameMethod = "method" + contador;
 		contador++;
+		
 		
 		//Nos aseguramos que el metodo sea de tipo static
 		ClassOrInterfaceType object = new ClassOrInterfaceType();
-		object.setName("static Object");
+		object.setName("Object");
 		ReferenceType type = new ReferenceType();
 		type.setArrayCount(1);
 		type.setType(object);
@@ -178,16 +190,47 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		methodDeclaration2.setType(type);
 		methodDeclaration2.setParameters(loopVariables.getParameters());
 		
-		//Llenado del método
+		// Añadimos el body del do while al principio del metodo
+		
 		BlockStmt cuerpoMetodo = new BlockStmt();
-		List<Statement> cuerpoMetodoStmts = new LinkedList<Statement>();
-		cuerpoMetodoStmts.add(whileStmt.getBody());
-		cuerpoMetodo.setStmts(cuerpoMetodoStmts);
+		List<Statement> stmtsMetodo = new LinkedList<Statement>();
+		MethodCallExpr callMethod = new MethodCallExpr();
+		callMethod.setName(nameMethod);
+		callMethod.setArgs(arguments);
+		stmtsMetodo.add(whileStmt.getBody());
+		ReturnStmt returnIf = new ReturnStmt();
+		returnIf.setExpr(callMethod);
+		
+		List<Statement> methodBody = new LinkedList<Statement>();
+		
+		
+		methodBody.add(returnIf);
+		
+		
+		BlockStmt blockIf2 = new BlockStmt();
+		blockIf2.setStmts(methodBody);
+		
+		// Creamos el if recursivo dentro del nuevo método
+		IfStmt recIf = new IfStmt(whileStmt.getCondition(), blockIf2, null);
+		stmtsMetodo.add(recIf);
+		cuerpoMetodo.setStmts(stmtsMetodo);
 		methodDeclaration2.setBody(cuerpoMetodo);
 		
 		
 		//Añadimos el nuevo metodo a la clase
 		this.classDeclaration.getMembers().add(methodDeclaration2);
+		
+		ReturnStmt returnStmt = new ReturnStmt();
+		ArrayInitializerExpr arrayReturn = new ArrayInitializerExpr();
+		arrayReturn.setValues(arguments);
+		
+		ArrayCreationExpr array2 = new ArrayCreationExpr();
+		array2.setType(objType);
+		array2.setArrayCount(1);
+		array2.setInitializer(arrayReturn);
+		returnStmt.setExpr(array2);
+		stmtsMetodo.add(returnStmt);
+		
 		
 		return newIf;
 	}
