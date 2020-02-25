@@ -7,6 +7,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="E:/Descargas/istack-commons-runtime-3.0.10.jar"/>
+	<classpathentry kind="lib" path="C:/Users/jmfel/Documents/Java_Slicer/istack-commons-runtime-3.0.10.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
