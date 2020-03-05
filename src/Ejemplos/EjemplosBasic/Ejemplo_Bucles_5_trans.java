@@ -1,6 +1,6 @@
-package EjemplosBasic;
+package Ejemplos.EjemplosBasic;
 
-public class Ejemplo_Bucles_5_transformadoF {
+public class Ejemplo_Bucles_5_trans {
 
     public static void main(String[] args) {
         int x = 0;
@@ -22,13 +22,19 @@ public class Ejemplo_Bucles_5_transformadoF {
         System.out.println();
         System.out.println("Empieza bucle FOR anidado a bucle DO WHILE:");
         x = 1;
-        do {
-            System.out.print(" " + x);
-            for (y = 'a'; y <= 'c'; y++) {
-                System.out.print(" " + y);
+        {
+            {
+                System.out.print(" " + x);
+                for (y = 'a'; y <= 'c'; y++) {
+                    System.out.print(" " + y);
+                }
+                x++;
             }
-            x++;
-        } while (x <= 10);
+            if (x <= 10) {
+                Object[] result = method2(x, y);
+                x = (Integer) result[0];
+            }
+        }
         System.out.println();
     }
 
@@ -37,7 +43,7 @@ public class Ejemplo_Bucles_5_transformadoF {
             System.out.print(" " + x);
             y = 'a';
             if (y <= 'c') {
-                Object[] result = method2(y);
+                Object[] result = method3(y);
                 y = (Character) result[0];
             }
             x++;
@@ -48,13 +54,27 @@ public class Ejemplo_Bucles_5_transformadoF {
         return new Object[] { x, y };
     }
 
-    public static Object[] method2(char y) {
+    public static Object[] method2(int x, char y) {
+        {
+            System.out.print(" " + x);
+            for (y = 'a'; y <= 'c'; y++) {
+                System.out.print(" " + y);
+            }
+            x++;
+        }
+        if (x <= 10) {
+            return method2(x, y);
+        }
+        return new Object[] { x, y };
+    }
+
+    public static Object[] method3(char y) {
         {
             System.out.print(" " + y);
             y++;
         }
         if (y <= 'c') {
-            return method2(y);
+            return method3(y);
         }
         return new Object[] { y };
     }

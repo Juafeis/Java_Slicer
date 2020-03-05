@@ -1,6 +1,6 @@
-package EjemplosBasic;
+package Ejemplos.EjemplosBasic;
 
-public class Ejemplo_Bucles_4_transformadoF {
+public class Ejemplo_Bucles_4_trans {
 
     public static void main(String[] args) {
         int x = 1;

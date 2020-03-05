@@ -1,6 +1,6 @@
-package EjemplosBasic;
+package Ejemplos.EjemplosBasic;
 
-public class Ejemplo_Bucles_3_transformadoF {
+public class Ejemplo_Bucles_3_trans {
 
     public static void main(String[] args) {
         int x;
@@ -18,10 +18,16 @@ public class Ejemplo_Bucles_3_transformadoF {
         System.out.println();
         System.out.println("Empieza bucle DO WHILE:");
         x = 1;
-        do {
-            System.out.print(" " + x);
-            x++;
-        } while (x <= 10);
+        {
+            {
+                System.out.print(" " + x);
+                x++;
+            }
+            if (x <= 10) {
+                Object[] result = method2(x);
+                x = (Integer) result[0];
+            }
+        }
         System.out.println();
     }
 
@@ -32,6 +38,17 @@ public class Ejemplo_Bucles_3_transformadoF {
         }
         if (x <= 10) {
             return method1(x);
+        }
+        return new Object[] { x };
+    }
+
+    public static Object[] method2(int x) {
+        {
+            System.out.print(" " + x);
+            x++;
+        }
+        if (x <= 10) {
+            return method2(x);
         }
         return new Object[] { x };
     }

@@ -4,6 +4,7 @@ import java.lang.instrument.ClassDefinition;
 import java.util.LinkedList;
 import java.util.List;
 
+import iter2rec.transformation.loop.Do;
 import iter2rec.transformation.loop.Loop;
 import iter2rec.transformation.loop.While;
 import iter2rec.transformation.variable.LoopVariables;
@@ -28,6 +29,7 @@ import japa.parser.ast.stmt.ExpressionStmt;
 import japa.parser.ast.stmt.IfStmt;
 import japa.parser.ast.stmt.ReturnStmt;
 import japa.parser.ast.stmt.Statement;
+import japa.parser.ast.stmt.ThrowStmt;
 import japa.parser.ast.stmt.WhileStmt;
 import japa.parser.ast.type.ClassOrInterfaceType;
 import japa.parser.ast.type.PrimitiveType;
@@ -81,113 +83,49 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		return newMethodDeclaration;
 	}
 	
-	// Visitador de sentencias "do while"
-	public Node visit(DoStmt whileStmt, Object args)
-	{
-		//Creamos el If recursivo 
-		IfStmt newIf = new IfStmt();
-		newIf.setCondition(whileStmt.getCondition());
-		//Object
-		ClassOrInterfaceType objType = new ClassOrInterfaceType();
-		objType.setName("Object");
-		// Creamos un objeto Loop que sirve para examinar bucles
-		Loop loop = new While(null, null, whileStmt);
-		// El objeto Loop nos calcula la lista de variables declaradas en el método y usadas en el bucle (la intersección)
-		List<Variable> variables = loop.getUsedVariables(methodDeclaration);
-		// Creamos un objeto LoopVariables que sirve para convertir la lista de variables en lista de argumentos y parámetros
-		LoopVariables loopVariables = new LoopVariables(variables);
-		// El objeto LoopVariables nos calcula la lista de argumentos del método 
-		List<Expression> arguments = loopVariables.getArgs();
-		//Declaración del segundo método
-		MethodDeclaration methodDeclaration2 = new MethodDeclaration();
-		methodDeclaration2.setName("method"+contador);
-		methodDeclaration2.setModifiers(methodDeclaration.getModifiers());
-		String nameMethod = methodDeclaration2.getName();
-		contador++;
-		
-		
-		//Mantener el típo del método en la nueva llamada
-		ClassOrInterfaceType object = new ClassOrInterfaceType();
-		object.setName("Object");
-		ReferenceType type = new ReferenceType();
-		type.setArrayCount(1);
-		type.setType(object);
-		
-		methodDeclaration2.setType(type);
-		methodDeclaration2.setParameters(loopVariables.getParameters());
-		
-		// Añadimos el body del do while al principio del metodo
-		
-		BlockStmt cuerpoMetodo = new BlockStmt();
-		List<Statement> stmtsMetodo = new LinkedList<Statement>();
-		MethodCallExpr callMethod = new MethodCallExpr();
-		callMethod.setName(nameMethod);
-		callMethod.setArgs(arguments);
-		stmtsMetodo.add(whileStmt.getBody());
-		ReturnStmt returnIf = new ReturnStmt();
-		returnIf.setExpr(callMethod);
-		
-		List<Statement> methodBody = new LinkedList<Statement>();
-		
-		
-		methodBody.add(returnIf);
-		
-		
-		BlockStmt blockIf2 = new BlockStmt();
-		blockIf2.setStmts(methodBody);
-		
-		// Creamos el if recursivo dentro del nuevo método
-		IfStmt recIf = new IfStmt(whileStmt.getCondition(), blockIf2, null);
-		stmtsMetodo.add(recIf);
-		cuerpoMetodo.setStmts(stmtsMetodo);
-		methodDeclaration2.setBody(cuerpoMetodo);
-		
-		
-		//Añadimos el nuevo metodo a la clase
-		this.classDeclaration.getMembers().add(methodDeclaration2);
-		
-		ReturnStmt returnStmt = new ReturnStmt();
-		ArrayInitializerExpr arrayInitializerExpr = new ArrayInitializerExpr();
-		arrayInitializerExpr.setValues(arguments);
-		
-		ArrayCreationExpr arrayCreationExpr = new ArrayCreationExpr();
-		arrayCreationExpr.setType(objType);
-		arrayCreationExpr.setArrayCount(1);
-		arrayCreationExpr.setInitializer(arrayInitializerExpr);
-		returnStmt.setExpr(arrayCreationExpr);
-		stmtsMetodo.add(returnStmt);
-		
-		
-		return newIf;
-	}
 	
-	// Visitador de sentencias "while"
-	public Node visit(WhileStmt whileStmt, Object args)
-	{
-		
+	public IfStmt whileCreation(Statement stmt) {
 		/**************************/
 		/******** LLAMADOR ********/
 		/**************************/		
-		
+		//Creamos el If recursivo 
+		IfStmt newIf = new IfStmt();
+
 		// Creamos un objeto Loop que sirve para examinar bucles
-		Loop loop = new While(null, null, whileStmt);
+		Loop loop = null;
+		
+		//while(***condition***)
+		Expression condition;
+		if(stmt instanceof WhileStmt) {
+			loop = new While(null, null, (WhileStmt)stmt);
+			newIf.setCondition(((WhileStmt)stmt).getCondition());
+			condition = ((WhileStmt)stmt).getCondition();
+		}
+		else if(stmt instanceof DoStmt) {
+			loop = new Do(null, null, (DoStmt)stmt);
+			newIf.setCondition(((DoStmt)stmt).getCondition());
+			condition = ((DoStmt)stmt).getCondition();
+		}
+			
 		// El objeto Loop nos calcula la lista de variables declaradas en el método y usadas en el bucle (la intersección)
 		List<Variable> variables = loop.getUsedVariables(methodDeclaration);
 		// Creamos un objeto LoopVariables que sirve para convertir la lista de variables en lista de argumentos y parámetros
 		LoopVariables loopVariables = new LoopVariables(variables);
 		// El objeto LoopVariables nos calcula la lista de argumentos del método 
 		List<Expression> arguments = loopVariables.getArgs();
-		//Creamos el If recursivo 
-		IfStmt newIf = new IfStmt();
-		newIf.setCondition(whileStmt.getCondition());
+		
+		
+
+		
+		
+				
 		
 		//*** If ***
 		BlockStmt blockIf = new BlockStmt();
 		newIf.setThenStmt(blockIf);
 		List<Statement> bodyIf = new LinkedList<Statement>();
 				
-		//while(***condition***)
-		Expression condition = whileStmt.getCondition();
+		
 		
 		//method_x()
 		MethodCallExpr methodCall = new MethodCallExpr();
@@ -222,6 +160,7 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		ExpressionStmt exprStmt = new ExpressionStmt();
 		exprStmt.setExpression(varDecExpr);
 		
+		
 		//*** If ***  
 		bodyIf.add(exprStmt);
 		
@@ -243,7 +182,9 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 			bodyIf.add(new ExpressionStmt(variables.get(i).getAssignationExpr(cast)));
 			i++;
 		}
-				
+		
+	
+		
 		blockIf.setStmts(bodyIf);
 		newIf.setThenStmt(blockIf);
 		
@@ -276,7 +217,13 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		MethodCallExpr callMethod = new MethodCallExpr();
 		callMethod.setName(nameMethod);
 		callMethod.setArgs(arguments);
-		stmtsMetodo.add(whileStmt.getBody());
+		if(stmt instanceof WhileStmt) {
+			stmtsMetodo.add(((WhileStmt)stmt).getBody());
+		}
+		else if(stmt instanceof DoStmt) {
+			stmtsMetodo.add(((DoStmt)stmt).getBody());
+		}
+		
 		ReturnStmt returnIf = new ReturnStmt();
 		returnIf.setExpr(callMethod);
 		
@@ -290,10 +237,18 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		blockIf2.setStmts(methodBody);
 		
 		// Creamos el if recursivo dentro del nuevo método
-		IfStmt recIf = new IfStmt(whileStmt.getCondition(), blockIf2, null);
-		stmtsMetodo.add(recIf);
-		cuerpoMetodo.setStmts(stmtsMetodo);
-		methodDeclaration2.setBody(cuerpoMetodo);
+		if(stmt instanceof WhileStmt) {
+			IfStmt recIf = new IfStmt(((WhileStmt)stmt).getCondition(), blockIf2, null);
+			stmtsMetodo.add(recIf);
+			cuerpoMetodo.setStmts(stmtsMetodo);
+			methodDeclaration2.setBody(cuerpoMetodo);
+		}else if(stmt instanceof DoStmt) {
+			IfStmt recIf = new IfStmt(((DoStmt)stmt).getCondition(), blockIf2, null);
+			stmtsMetodo.add(recIf);
+			cuerpoMetodo.setStmts(stmtsMetodo);
+			methodDeclaration2.setBody(cuerpoMetodo);
+		}
+		
 		
 		
 		//Añadimos el nuevo metodo a la clase
@@ -313,7 +268,29 @@ public class Visitador extends ModifierVisitorAdapter<Object>
 		
 		return newIf;
 	}
-
+	
+	// Visitador de sentencias "do while"
+	public Node visit(DoStmt whileStmt, Object args)
+	{
+		//Body DOWHILE
+		BlockStmt blockDoWhile = new BlockStmt();
+		List<Statement> bodyDoWhile = new LinkedList<Statement>();
+		bodyDoWhile.add((whileStmt.getBody()));
+		bodyDoWhile.add(whileCreation(whileStmt));
+		blockDoWhile.setStmts(bodyDoWhile);
+		return blockDoWhile;
+	}
+	
+	// Visitador de sentencias "while"
+	public Node visit(WhileStmt whileStmt, Object args)
+	{
+		return whileCreation(whileStmt);
+		
+	}
+	public Node visit(ThrowStmt throwStmt) {
+		return throwStmt;
+		
+	}
 	// Dada un tipo, 
 	// Si es un tipo primitivo, devuelve el wrapper correspondiente 
 	// Si es un tipo no primitivo, lo devuelve

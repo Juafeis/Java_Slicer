@@ -1,6 +1,6 @@
-package EjemplosBasic;
+package Ejemplos.EjemplosBasic;
 
-public class Ejemplo_Bucles_2_transformadoF {
+public class Ejemplo_Bucles_2_trans {
 
     public static void main(String[] args) {
         System.out.println("Empieza bucle WHILE anidado a otro WHILE:");

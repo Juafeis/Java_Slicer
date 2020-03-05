@@ -1,21 +1,25 @@
-package EjemplosBasic;
+package Ejemplos.EjemplosChallenging;
 
-public class Ejemplo_Bucles_1_transformadoF {
+public class Challenging_Bucles_3_trans {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        int resultado = sumatorio(1);
+        System.out.println(resultado);
+    }
+
+    public static int sumatorio(int x) throws Exception {
         System.out.println("Empieza bucle WHILE:");
-        int x = 1;
         if (x <= 10) {
             Object[] result = method1(x);
             x = (Integer) result[0];
         }
-        System.out.println();
+        return x;
     }
 
     public static Object[] method1(int x) {
         {
-            System.out.print(" " + x);
             x++;
+            continue;
         }
         if (x <= 10) {
             return method1(x);
